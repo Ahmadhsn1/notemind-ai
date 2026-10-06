@@ -628,3 +628,11 @@ participation is under the [Code of Conduct](CODE_OF_CONDUCT.md).
 ## License
 
 [MIT](LICENSE) © Ahmad Hassan
+
+## Case study
+
+The engineering decisions, metrics and screenshots for NoteMind are written up in the [NoteMind case study](https://ahmadhsn1.github.io/work/notemind/).
+
+Related writing:
+
+- [Do Not Retry an LLM Rate Limit, Reschedule It](https://ahmadhsn1.github.io/blog/llm-rate-limits-bullmq-reschedule/)

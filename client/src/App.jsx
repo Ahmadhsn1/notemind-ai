@@ -16,6 +16,7 @@ import Dashboard from './pages/Dashboard';
 import Account from './pages/Account';
 import AdminLogin from './pages/AdminLogin';
 import { useAuth } from './context/AuthContext';
+import useRouteTitle from './hooks/useRouteTitle';
 
 // Admin (703 lines, d3-free but still one of the largest pages) and
 // GraphView (pulls in d3-force) are never needed on first paint — most
@@ -35,6 +36,7 @@ const RouteFallback = () => (
 function App() {
   const { user } = useAuth();
   const location = useLocation();
+  useRouteTitle();
 
   return (
     <Routes>

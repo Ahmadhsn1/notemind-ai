@@ -1,7 +1,10 @@
 {
-  "name": "NoteMind",
+  "id": "/dashboard",
+  "name": "NoteMind — Notes that think with you",
   "short_name": "NoteMind",
-  "description": "Your thoughts, organized and alive — AI-powered note taking.",
+  "description": "Free AI notes that answer questions from what you've written, turn any note into flashcards, and help you remember it.",
+  "lang": "en",
+  "categories": ["education", "productivity"],
   "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",

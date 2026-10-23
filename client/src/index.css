@@ -111,6 +111,16 @@
   100% { transform: translateX(-50%) scale(1); opacity: 1; }
 }
 
+/* The auth-screen mascots are purely decorative; honour the OS-level
+   "reduce motion" setting by holding them still (eye tracking still works,
+   it's a response to the user's own pointer, not autonomous motion). */
+@media (prefers-reduced-motion: reduce) {
+  [data-watchers],
+  [data-watchers] * {
+    animation: none !important;
+  }
+}
+
 @keyframes toastIn {
   0% { transform: translateY(12px); opacity: 0; }
   100% { transform: translateY(0); opacity: 1; }

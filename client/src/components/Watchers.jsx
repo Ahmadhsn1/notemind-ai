@@ -45,12 +45,15 @@ function useBlink(delay) {
   const [blinking, setBlinking] = useState(false);
 
   useEffect(() => {
+    // Both the "wait until next blink" and "eyes closed" timers are tracked
+    // through one id, so unmounting mid-blink cancels whichever is pending
+    // instead of leaking the inner one and setting state on an unmounted tree.
     let timeoutId;
     const scheduleBlink = () => {
       const nextBlink = 2500 + Math.random() * 3500;
       timeoutId = setTimeout(() => {
         setBlinking(true);
-        setTimeout(() => {
+        timeoutId = setTimeout(() => {
           setBlinking(false);
           scheduleBlink();
         }, 140);
@@ -193,7 +196,7 @@ function Notebook({ mode, mousePos, bounceKey }) {
       {/* corner ribbon bookmark */}
       <div
         className="absolute -top-1 right-4 w-3 h-6"
-        style={{ background: '#ffce54', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 50% 75%, 0 100%)' }}
+        style={{ background: 'color-mix(in srgb, var(--color-amber) 70%, white)', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 50% 75%, 0 100%)' }}
       />
       {/* spiral binding */}
       <div className="absolute left-2.5 top-3 bottom-3 flex flex-col justify-between">
@@ -253,11 +256,11 @@ function Folder({ mode, mousePos, bounceKey }) {
       <div className="absolute -top-2 left-4 right-4 h-6 rounded-t-[6px] bg-white/85" />
       <div
         className="w-12 h-4 rounded-t-[8px] ml-1.5 relative"
-        style={{ background: 'linear-gradient(160deg, #b39cff, #8a6ef0)' }}
+        style={{ background: 'linear-gradient(160deg, color-mix(in srgb, var(--color-accent) 45%, white), color-mix(in srgb, var(--color-accent) 75%, white))' }}
       />
       <div
         className={`w-32 h-24 rounded-[4px_14px_14px_14px] relative overflow-hidden ${CHAR_SHADOW}`}
-        style={{ background: 'linear-gradient(155deg, #c3b0ff 0%, #9a7bff 55%, color-mix(in srgb, #9a7bff 75%, black) 100%)' }}
+        style={{ background: 'linear-gradient(155deg, color-mix(in srgb, var(--color-accent) 40%, white) 0%, color-mix(in srgb, var(--color-accent) 70%, white) 55%, color-mix(in srgb, var(--color-accent) 55%, black) 100%)' }}
       >
         <div className="absolute top-0 inset-x-0 h-px bg-white/25" />
         <div className="absolute top-[22px] left-0 right-0"><Eyes pupil={pupil} blinking={blinking} blush={mode === 'shy'} size={16} gap={9} /></div>
@@ -271,13 +274,24 @@ function Watchers({ mode, bounceKey }) {
   const [mousePos, setMousePos] = useState(null);
 
   useEffect(() => {
-    const handleMove = (e) => setMousePos({ x: e.clientX, y: e.clientY });
+    // Pointer events can fire several times per frame, and every update
+    // re-renders all four characters (each reads layout). Coalesce to at
+    // most one state update per animation frame.
+    let frame = 0;
+    let latest = null;
+    const queue = (x, y) => {
+      latest = { x, y };
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        setMousePos(latest);
+      });
+    };
+    const handleMove = (e) => queue(e.clientX, e.clientY);
     // Touch devices never fire mousemove, so without this the "watch" eyes
     // would never get real coordinates — mirror mouse tracking with touch.
     const handleTouch = (e) => {
-      if (e.touches.length > 0) {
-        setMousePos({ x: e.touches[0].clientX, y: e.touches[0].clientY });
-      }
+      if (e.touches.length > 0) queue(e.touches[0].clientX, e.touches[0].clientY);
     };
     window.addEventListener('mousemove', handleMove);
     window.addEventListener('touchstart', handleTouch, { passive: true });
@@ -286,11 +300,12 @@ function Watchers({ mode, bounceKey }) {
       window.removeEventListener('mousemove', handleMove);
       window.removeEventListener('touchstart', handleTouch);
       window.removeEventListener('touchmove', handleTouch);
+      cancelAnimationFrame(frame);
     };
   }, []);
 
   return (
-    <div className="flex items-end gap-[10px] relative scale-75 min-[500px]:scale-90 min-[800px]:scale-100 ml-0 min-[800px]:ml-[-40px]">
+    <div aria-hidden="true" data-watchers className="flex items-end gap-[10px] relative scale-75 min-[500px]:scale-90 min-[800px]:scale-100 ml-0 min-[800px]:ml-[-40px]">
       {mode === 'remind' && (
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-[14px] bg-white text-[#14161c] text-[13px] font-semibold whitespace-nowrap py-2 px-3.5 rounded-[14px] shadow-[0_6px_20px_rgba(0,0,0,0.25)] z-[3] animate-bubble-pop after:content-[''] after:absolute after:top-full after:left-1/2 after:-translate-x-1/2 after:border-[7px] after:border-transparent after:border-t-white">
           Hide your password...

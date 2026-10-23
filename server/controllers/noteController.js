@@ -585,6 +585,11 @@ const askNotes = async (req, res) => {
       }
     }
   } catch {
+    // Nothing has reached the client yet (the first chunk failed or timed
+    // out) — ending silently would show an empty answer, so say so instead.
+    if (sentUpTo === 0) {
+      return writeFallbackReply(res, "Sorry, I couldn't get an answer from the AI service in time. Try again in a moment.");
+    }
     // Failed mid-stream (rare — see aiService.withRetryStream) — whatever
     // answer text already reached the client stays; end here rather than
     // writing a raw error into the middle of Momo's reply.

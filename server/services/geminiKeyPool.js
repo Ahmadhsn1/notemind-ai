@@ -23,10 +23,16 @@ if (rawKeys.length === 0) {
 // GoogleGenAI on every call) plus cooldownUntil, set only when THIS key hits
 // a quota error — a key that's fine keeps serving requests even while
 // others are cooling down.
+// Per-request ceiling. Without one, a Gemini call that hangs (a model alias
+// that resolves to a slow model, a stalled connection) never fails — the user
+// stares at "thinking…" indefinitely instead of getting an answer or an
+// error. Override with AI_REQUEST_TIMEOUT_MS.
+const REQUEST_TIMEOUT_MS = Number(process.env.AI_REQUEST_TIMEOUT_MS) || 30000;
+
 const pool = rawKeys.map((key, i) => ({
   key,
   label: `Gemini key #${i + 1}`,
-  client: new GoogleGenAI({ apiKey: key }),
+  client: new GoogleGenAI({ apiKey: key, httpOptions: { timeout: REQUEST_TIMEOUT_MS } }),
   cooldownUntil: 0,
 }));
 

@@ -1,6 +1,10 @@
 const { getClient, markExhausted, poolSize } = require('./geminiKeyPool');
 
-const MODEL = 'gemini-flash-latest';
+// Pinned, not a floating "-latest" alias: Google repoints those whenever it
+// likes, and gemini-flash-latest silently moved to a model that took 75s to
+// answer "Say OK" — every AI feature then hung. A fixed name changes only when
+// we change it. Override with GEMINI_MODEL (e.g. to try a newer model).
+const MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
 const EMBEDDING_MODEL = 'gemini-embedding-001';
 const EMBEDDING_MAX_CHARS = 8000;
 // Capped well below poolSize even with a large pool — each attempt is a

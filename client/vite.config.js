@@ -28,6 +28,28 @@ const swBuildId = () => ({
   },
 })
 
+// Open Graph / Twitter images and the canonical link must be absolute URLs to
+// work in link previews, and the production domain isn't known at build time
+// in every environment. Inject them only when VITE_SITE_URL is set, rather than
+// shipping relative or placeholder URLs that crawlers silently ignore.
+const siteUrlTags = (siteUrl) => ({
+  name: 'site-url-tags',
+  transformIndexHtml() {
+    if (!siteUrl) return []
+    const base = siteUrl.replace(/\/+$/, '')
+    const image = `${base}/og-image.png`
+    return [
+      { tag: 'link', attrs: { rel: 'canonical', href: `${base}/` }, injectTo: 'head' },
+      { tag: 'meta', attrs: { property: 'og:url', content: `${base}/` }, injectTo: 'head' },
+      { tag: 'meta', attrs: { property: 'og:image', content: image }, injectTo: 'head' },
+      { tag: 'meta', attrs: { property: 'og:image:width', content: '1200' }, injectTo: 'head' },
+      { tag: 'meta', attrs: { property: 'og:image:height', content: '630' }, injectTo: 'head' },
+      { tag: 'meta', attrs: { property: 'og:image:alt', content: 'NoteMind — Notes that think with you' }, injectTo: 'head' },
+      { tag: 'meta', attrs: { name: 'twitter:image', content: image }, injectTo: 'head' },
+    ]
+  },
+})
+
 // https://vite.dev/config/
 export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
@@ -51,6 +73,6 @@ export default defineConfig(({ command, mode }) => {
   }
 
   return {
-    plugins: [react(), tailwindcss(), swBuildId()],
+    plugins: [react(), tailwindcss(), swBuildId(), siteUrlTags(env.VITE_SITE_URL)],
   }
 })

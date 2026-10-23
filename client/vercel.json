@@ -5,7 +5,7 @@
   "framework": "vite",
   "rewrites": [
     {
-      "source": "/((?!assets/|sw\\.js|manifest\\.json|favicon\\.svg|apple-touch-icon\\.png).*)",
+      "source": "/((?!assets/|.*\\.(?:png|svg|ico|json|txt|xml|js|webmanifest)$).*)",
       "destination": "/index.html"
     }
   ],

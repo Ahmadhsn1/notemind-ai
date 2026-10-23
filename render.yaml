@@ -1,0 +1,47 @@
+# Render Blueprint for the NoteMind API (Express + Socket.IO).
+# The client is deployed separately on Vercel (client/vercel.json) — see the
+# "Deployment" section of the README for why the API is not also on Vercel.
+#
+# Secrets are declared `sync: false`: Render prompts for them on first
+# apply, and they are never stored in the repo.
+services:
+  - type: web
+    name: notemind-api
+    runtime: docker
+    dockerfilePath: ./server/Dockerfile
+    dockerContext: ./server
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Generated once by Render; changing it logs every user out.
+      - key: JWT_SECRET
+        generateValue: true
+      # MongoDB Atlas connection string.
+      - key: MONGO_URI
+        sync: false
+      # The Vercel URL(s) of the client, comma-separated — used for both REST
+      # CORS and the Socket.IO handshake.
+      - key: CLIENT_URL
+        sync: false
+      # Cloudflare R2 (all four required in production).
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET
+        sync: false
+      # AI (optional — features degrade gracefully without it).
+      - key: GEMINI_API_KEYS
+        sync: false
+      # Google Sign-In (optional).
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      # Transactional email — set ONE backend (see server/.env.example).
+      - key: GMAIL_USER
+        sync: false
+      - key: GMAIL_APP_PASSWORD
+        sync: false

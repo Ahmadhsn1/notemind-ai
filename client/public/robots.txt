@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+# App surfaces behind login / admin — nothing here for a crawler.
+Disallow: /dashboard
+Disallow: /graph
+Disallow: /account
+Disallow: /admin
+Disallow: /share/

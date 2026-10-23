@@ -574,6 +574,23 @@ severs streaming responses mid-write and triggers a client reconnect storm.
 
 ---
 
+## Brand
+
+- **Voice** — "Notes that think with you": AI that answers from *your* notes,
+  flashcards that make them stick, free with no ads. Never framed as a
+  "second brain".
+- **Mark** — an open ring fading indigo → teal-green with a glowing node at
+  the growth end (`components/Logo.jsx`, `public/favicon.svg`); the same
+  gradient drives the review-streak ring on the dashboard.
+- **Palette** — graphite ground, one indigo accent (`--color-accent`), teal-green
+  reserved for growth/success, amber for warmth. All defined once as design
+  tokens in `client/src/index.css`, light and dark.
+- **Auth-screen characters** (`components/Watchers.jsx`) — a pencil, notebook,
+  bookmark and folder that follow the cursor, look away when you type a
+  password, and honour `prefers-reduced-motion`.
+- **Link previews** — `public/og-image.png` (1200×630) plus Open Graph / Twitter
+  tags; per-route tab titles come from `hooks/useRouteTitle.js`.
+
 ## Deployment
 
 | Component | Platform |
@@ -591,6 +608,21 @@ to rooms spanning all connections — on serverless, a socket held by one
 instance would never receive an event emitted from another. The badge would
 read "Live" while nothing updated. Consolidating onto one platform requires a
 Redis pub/sub backplane first.
+
+**Deploying it.** `render.yaml` at the repo root is a Render Blueprint for the
+API: *New → Blueprint → pick this repo*, then fill in the prompted secrets
+(`MONGO_URI`, `CLIENT_URL`, the four `R2_*` values, and optionally
+`GEMINI_API_KEYS`, `GOOGLE_CLIENT_ID`, one email backend). For the client,
+import the repo into Vercel with **Root Directory = `client`** and set:
+
+| Variable | Value |
+|---|---|
+| `VITE_API_URL` | `https://<your-api>.onrender.com/api` (the build fails without it) |
+| `VITE_SITE_URL` | the public client URL — enables canonical + Open Graph image URLs |
+| `VITE_GOOGLE_CLIENT_ID` | optional, same Client ID as the server's |
+
+Then set the API's `CLIENT_URL` to the Vercel URL so CORS and the WebSocket
+handshake accept it.
 
 CI runs client lint and build, the full server test suite, and a Docker image
 build on every push and pull request against `main`.

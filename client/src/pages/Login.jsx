@@ -104,7 +104,7 @@ function Login() {
 
 	return (
 		<div className="flex justify-center items-center min-h-screen p-5 overflow-x-hidden">
-			<div className="flex flex-col items-center justify-center gap-8 w-full max-w-[1100px] min-[800px]:flex-row min-[800px]:gap-[110px]">
+			<div className="flex flex-col items-center justify-center gap-8 w-full max-w-[1100px] min-[800px]:flex-row min-[800px]:gap-[clamp(32px,6vw,110px)]">
 				<Watchers mode={watcherMode} bounceKey={bounceKey} />
 				<div className="w-full max-w-[520px] rounded-[20px] border border-ink/15 bg-ink/7 backdrop-blur-[18px] py-8 px-6 min-[481px]:py-14 min-[481px]:px-[52px]">
 					<Logo size={34} textSize="text-[34px]" className="justify-center mb-1.5" />

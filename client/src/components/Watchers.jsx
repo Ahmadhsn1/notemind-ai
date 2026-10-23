@@ -12,11 +12,11 @@ function useEyes(mode, mousePos, ref) {
 
     let next;
     if (mode === 'lookAtForm') {
-      next = { pupil: { x: 4, y: 1 }, tilt: 5 };
+      next = { pupil: { x: 1, y: 0.25 }, tilt: 5 };
     } else if (mode === 'shy') {
-      next = { pupil: { x: -4, y: -2 }, tilt: -9 };
+      next = { pupil: { x: -1, y: -0.5 }, tilt: -9 };
     } else if (mode === 'remind' || mode === 'glance') {
-      next = { pupil: { x: 0, y: -3 }, tilt: 0 };
+      next = { pupil: { x: 0, y: -0.75 }, tilt: 0 };
     } else if (!mousePos) {
       // No real pointer yet (e.g. touch device before the first tap) — rest
       // the eyes straight ahead instead of aiming at a stale (0,0) origin.
@@ -28,7 +28,9 @@ function useEyes(mode, mousePos, ref) {
       const dx = mousePos.x - cx;
       const dy = mousePos.y - cy;
       const angle = Math.atan2(dy, dx);
-      const dist = Math.min(4, Math.hypot(dx, dy) / 40);
+      // Normalized 0..1 (full deflection at ~160px away); <Eyes> scales it to
+      // each eye's own size so small eyes never push the pupil past the rim.
+      const dist = Math.min(1, Math.hypot(dx, dy) / 160);
       next = {
         pupil: { x: Math.cos(angle) * dist, y: Math.sin(angle) * dist },
         tilt: Math.max(-6, Math.min(6, dx / 60)),
@@ -66,56 +68,94 @@ function useBlink(delay) {
   return blinking;
 }
 
-function Eyes({ pupil, blinking, blush, size = 16, gap = 8 }) {
-  const pupilSize = size * 0.45;
-  const blushSize = size * 0.9;
+// Understated face: small, wide-set dark eyes with a single catchlight and a
+// subtle smile — friendly without being juvenile, and legible at any size
+// (big white eyes with pupils read as startled).
+// `size` is the face scale; every part below is derived from it so the same
+// face works on a 36px pencil and a 112px notebook.
+const INK = '#14161c';
+
+function Eye({ w, h, blinking, offset }) {
   return (
-    <div style={{ position: 'relative', display: 'flex', gap: `${gap}px`, justifyContent: 'center' }}>
-      {blush && [0, 1].map((i) => (
+    <div
+      style={{
+        width: w,
+        height: h,
+        borderRadius: '50%',
+        background: INK,
+        position: 'relative',
+        transform: `translate(${offset.x}px, ${offset.y}px) scaleY(${blinking ? 0.12 : 1})`,
+        transition: 'transform 0.14s ease-out',
+      }}
+    >
+      <div style={{ position: 'absolute', top: '15%', left: '18%', width: '38%', height: '38%', borderRadius: '50%', background: '#fff' }} />
+    </div>
+  );
+}
+
+function Eyes({ pupil, blinking, shy, size }) {
+  const w = size * 0.42;
+  const h = size * 0.54;
+  // Eyes drift toward whatever the character is looking at; kept tiny so the
+  // face stays composed instead of wandering.
+  const reach = size * 0.1;
+  const offset = { x: pupil.x * reach, y: pupil.y * reach };
+  const blushW = size * 0.6;
+  return (
+    <div style={{ position: 'relative', display: 'flex', gap: size * 0.8, justifyContent: 'center', alignItems: 'center', height: h }}>
+      {[0, 1].map((i) => (
         <div
           key={`blush-${i}`}
           style={{
             position: 'absolute',
-            top: size * 0.8,
-            left: i === 0 ? -blushSize * 0.6 : undefined,
-            right: i === 1 ? -blushSize * 0.6 : undefined,
-            width: blushSize,
-            height: blushSize * 0.6,
-            background: 'rgba(232, 67, 147, 0.55)',
+            top: h * 0.78,
+            left: i === 0 ? -blushW * 0.7 : undefined,
+            right: i === 1 ? -blushW * 0.7 : undefined,
+            width: blushW,
+            height: blushW * 0.55,
             borderRadius: '50%',
+            background: 'rgba(240, 110, 140, 0.55)',
             filter: 'blur(1.5px)',
+            opacity: shy ? 1 : 0,
+            transition: 'opacity 0.25s ease-out',
           }}
         />
       ))}
       {[0, 1].map((i) => (
-        <div
-          key={i}
-          style={{
-            width: size,
-            height: blinking ? 2 : size,
-            background: '#fff',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'height 0.08s ease-in-out',
-            overflow: 'hidden',
-            boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.15)',
-          }}
-        >
-          <div
-            style={{
-              width: pupilSize,
-              height: pupilSize,
-              background: '#14161c',
-              borderRadius: '50%',
-              transform: `translate(${pupil.x}px, ${pupil.y}px)`,
-              transition: 'transform 0.15s ease-out',
-              opacity: blinking ? 0 : 1,
-            }}
-          />
-        </div>
+        <Eye key={i} w={w} h={h} blinking={blinking} offset={offset} />
       ))}
+    </div>
+  );
+}
+
+const MOUTHS = {
+  smile: <path d="M2 2 Q7 7 12 2" />,
+  open: <ellipse cx="7" cy="4.5" rx="2" ry="2.4" fill={INK} stroke="none" />,
+};
+
+function Mouth({ mode, size }) {
+  return (
+    <svg
+      width={size * 0.46}
+      height={size * 0.28}
+      viewBox="0 0 14 9"
+      fill="none"
+      stroke={INK}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ marginTop: size * 0.22, overflow: 'visible' }}
+    >
+      {MOUTHS[mode === 'remind' ? 'open' : 'smile']}
+    </svg>
+  );
+}
+
+function Face({ mode, pupil, blinking, size }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+      <Eyes pupil={pupil} blinking={blinking} shy={mode === 'shy'} size={size} />
+      <Mouth mode={mode} size={size} />
     </div>
   );
 }
@@ -160,10 +200,10 @@ function Pencil({ mode, mousePos, bounceKey }) {
       </div>
       {/* body */}
       <div
-        className="w-9 h-[142px] relative"
-        style={{ background: 'linear-gradient(90deg, color-mix(in srgb, var(--color-amber) 65%, black) 0%, var(--color-amber) 42%, color-mix(in srgb, var(--color-amber) 78%, white) 62%, color-mix(in srgb, var(--color-amber) 65%, black) 100%)' }}
+        className="w-9 h-[142px] relative overflow-hidden"
+        style={{ background: 'linear-gradient(90deg, #e8a82e 0%, #ffd45c 40%, #ffe48a 60%, #e8a82e 100%)' }}
       >
-        <div className="absolute top-[18px] left-0 right-0"><Eyes pupil={pupil} blinking={blinking} blush={mode === 'shy'} size={12} gap={5} /></div>
+        <div className="absolute top-[18px] left-0 right-0"><Face mode={mode} pupil={pupil} blinking={blinking} size={16} /></div>
       </div>
       {/* wood tip + graphite point */}
       <div className="relative">
@@ -196,7 +236,7 @@ function Notebook({ mode, mousePos, bounceKey }) {
       {/* corner ribbon bookmark */}
       <div
         className="absolute -top-1 right-4 w-3 h-6"
-        style={{ background: 'color-mix(in srgb, var(--color-amber) 70%, white)', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 50% 75%, 0 100%)' }}
+        style={{ background: '#ffd45c', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 50% 75%, 0 100%)' }}
       />
       {/* spiral binding */}
       <div className="absolute left-2.5 top-3 bottom-3 flex flex-col justify-between">
@@ -208,7 +248,7 @@ function Notebook({ mode, mousePos, bounceKey }) {
           />
         ))}
       </div>
-      <div className="absolute top-6 left-9 right-2.5"><Eyes pupil={pupil} blinking={blinking} blush={mode === 'shy'} size={16} gap={8} /></div>
+      <div className="absolute top-6 left-9 right-2.5"><Face mode={mode} pupil={pupil} blinking={blinking} size={21} /></div>
       <div className="absolute h-[3px] rounded-[2px] bg-white/30 bottom-9 left-10 right-6" />
       <div className="absolute h-[3px] rounded-[2px] bg-white/30 bottom-6 left-10 right-4" />
     </div>
@@ -235,7 +275,7 @@ function Bookmark({ mode, mousePos, bounceKey }) {
       >
         <div className="absolute inset-y-0 left-1/2 w-px bg-black/10" />
         <div className="absolute top-3.5 left-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full" style={{ boxShadow: 'inset 0 0 0 3px rgba(255,255,255,0.6)' }} />
-        <div className="absolute top-11 left-0 right-0"><Eyes pupil={pupil} blinking={blinking} blush={mode === 'shy'} size={14} gap={7} /></div>
+        <div className="absolute top-11 left-0 right-0"><Face mode={mode} pupil={pupil} blinking={blinking} size={18} /></div>
       </div>
     </div>
   );
@@ -263,7 +303,7 @@ function Folder({ mode, mousePos, bounceKey }) {
         style={{ background: 'linear-gradient(155deg, color-mix(in srgb, var(--color-accent) 40%, white) 0%, color-mix(in srgb, var(--color-accent) 70%, white) 55%, color-mix(in srgb, var(--color-accent) 55%, black) 100%)' }}
       >
         <div className="absolute top-0 inset-x-0 h-px bg-white/25" />
-        <div className="absolute top-[22px] left-0 right-0"><Eyes pupil={pupil} blinking={blinking} blush={mode === 'shy'} size={16} gap={9} /></div>
+        <div className="absolute top-[22px] left-0 right-0"><Face mode={mode} pupil={pupil} blinking={blinking} size={21} /></div>
         <div className="absolute -bottom-6 -right-6 w-20 h-20 rounded-full bg-black/10 blur-md" />
       </div>
     </div>
@@ -305,12 +345,14 @@ function Watchers({ mode, bounceKey }) {
   }, []);
 
   return (
-    <div aria-hidden="true" data-watchers className="flex items-end gap-[10px] relative scale-75 min-[500px]:scale-90 min-[800px]:scale-100 ml-0 min-[800px]:ml-[-40px]">
+    <div aria-hidden="true" data-watchers className="animate-char-rise shrink-0 flex items-end gap-[10px] relative scale-75 min-[500px]:scale-90 min-[800px]:scale-100 ml-0 min-[1100px]:ml-[-40px]">
       {mode === 'remind' && (
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-[14px] bg-white text-[#14161c] text-[13px] font-semibold whitespace-nowrap py-2 px-3.5 rounded-[14px] shadow-[0_6px_20px_rgba(0,0,0,0.25)] z-[3] animate-bubble-pop after:content-[''] after:absolute after:top-full after:left-1/2 after:-translate-x-1/2 after:border-[7px] after:border-transparent after:border-t-white">
           Hide your password...
         </div>
       )}
+      {/* soft ground shadow that breathes in sync with the characters' float */}
+      <div className="absolute -bottom-3 inset-x-3 h-3 rounded-[50%] bg-black/30 blur-md animate-shadow-pulse" />
       <Pencil mode={mode} mousePos={mousePos} bounceKey={bounceKey} />
       <Notebook mode={mode} mousePos={mousePos} bounceKey={bounceKey} />
       <Bookmark mode={mode} mousePos={mousePos} bounceKey={bounceKey} />

@@ -38,6 +38,8 @@
   --animate-char-float: charFloat 3.5s ease-in-out infinite;
   --animate-char-wiggle: charWiggle 0.6s ease-in-out infinite;
   --animate-char-bounce: charBounce 0.6s ease-out;
+  --animate-char-rise: charRise 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-shadow-pulse: shadowPulse 3.5s ease-in-out infinite;
   --animate-bubble-pop: bubblePop 0.3s ease-out;
   --animate-toast-in: toastIn 0.25s ease-out;
 }
@@ -103,6 +105,16 @@
   40% { transform: rotate(var(--tilt, 0deg)) translateY(-18px) scale(1.05); }
   70% { transform: rotate(var(--tilt, 0deg)) translateY(-4px) scale(0.98); }
   100% { transform: rotate(var(--tilt, 0deg)) translateY(0) scale(1); }
+}
+
+@keyframes charRise {
+  0% { transform: translateY(28px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes shadowPulse {
+  0%, 100% { transform: scaleX(1); opacity: 0.9; }
+  50% { transform: scaleX(0.88); opacity: 0.55; }
 }
 
 @keyframes bubblePop {

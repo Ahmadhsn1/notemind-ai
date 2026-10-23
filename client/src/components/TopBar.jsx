@@ -9,14 +9,14 @@ function TopBar({searchQuery, onSearchChange, sortMode, onSortChange, viewMode, 
 
 	return (
 		<div className="flex items-center justify-between gap-2.5 mb-5 flex-wrap min-[761px]:flex-nowrap">
-			<div className="flex items-center gap-2.5 flex-1 min-w-0">
+			<div className="flex items-center gap-2.5 w-full min-w-0 min-[761px]:w-auto min-[761px]:flex-1">
 				<button
 					onClick={onOpenSidebar}
 					aria-label="Open menu"
 					className="flex min-[761px]:hidden w-9 h-9 p-0 shrink-0 items-center justify-center rounded-[10px] bg-ink/8 border border-ink/15 text-ink text-[15px] cursor-pointer transition-[opacity,transform] duration-200 hover:opacity-90 active:scale-[0.98]"
 				>☰</button>
 
-				<div className="relative flex-1 min-w-[160px] max-w-[520px]">
+				<div className="relative flex-1 min-w-0 min-[761px]:min-w-[160px] max-w-[520px]">
 					<input
 						type="text"
 						placeholder="Search notes..."
@@ -30,11 +30,11 @@ function TopBar({searchQuery, onSearchChange, sortMode, onSortChange, viewMode, 
 				</div>
 			</div>
 
-			<div className="flex items-center gap-2.5 shrink-0">
+			<div className="flex items-center gap-2.5 shrink-0 max-[760px]:w-full">
 				<select
 					value={sortMode}
 					onChange={(e) => onSortChange(e.target.value)}
-					className="input-base w-auto"
+					className="input-base w-auto max-[760px]:flex-1 max-[760px]:min-w-0"
 				>
 					<option value="newest">Newest first</option>
 					<option value="oldest">Oldest first</option>

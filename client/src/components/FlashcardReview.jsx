@@ -94,7 +94,14 @@ function FlashcardReview({isOpen, noteId, onClose}) {
 				{loading ? (
 					<p className="text-[13px] text-ink/50 text-center py-8">Loading…</p>
 				) : cards.length === 0 ? (
-					<p className="text-[13px] text-ink/50 text-center py-8">No flashcards due right now. Nice work!</p>
+					<div className="text-center py-8">
+						<p className="text-[13px] text-ink/60">No flashcards due right now.</p>
+						{!noteId && (
+							<p className="text-[12px] text-ink/40 mt-1.5 max-w-[34ch] mx-auto leading-[1.5]">
+								Open any note and choose Flashcards to turn it into a deck — new cards will show up here.
+							</p>
+						)}
+					</div>
 				) : index >= cards.length ? (
 					<div className="text-center py-8">
 						<p className="text-[14px] text-ink/80 font-semibold mb-1">All done!</p>

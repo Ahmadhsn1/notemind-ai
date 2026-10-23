@@ -281,7 +281,14 @@ function Dashboard() {
 		setLegacyBody('')
 		setBodyPlainText('')
 		setTags('')
-		setFolder(existingFolders[0])
+		// A new note belongs where the user is looking: the folder they have open,
+		// else the default "General" shelf, else (an account with no General) the
+		// first folder — not whichever folder happens to sort first.
+		setFolder(
+			existingFolders.includes(activeFolder) ? activeFolder
+				: existingFolders.includes('General') ? 'General'
+					: existingFolders[0]
+		)
 		setReminderAt('')
 	}
 
@@ -637,9 +644,15 @@ function Dashboard() {
 							{view === 'trash' ? 'Trash is empty' : view === 'archived' ? 'No archived notes' : 'No notes match'}
 						</h4>
 						<p className="text-[13px]">
-							{view === 'active'
-								? 'Try a different folder or search term, or create your first note.'
-								: 'Try a different folder or search term.'}
+							{searchQuery.trim() || activeFolder !== 'All' || activeTag || selectedDay
+								? (view === 'active'
+									? 'Try a different folder or search term, or create your first note.'
+									: 'Try a different folder or search term.')
+								: view === 'trash'
+									? 'Notes you delete land here, and you can restore them any time.'
+									: view === 'archived'
+										? 'Archive notes you want out of the way without deleting them — they will show up here.'
+										: 'Create your first note to get started.'}
 						</p>
 					</div>
 				) : (

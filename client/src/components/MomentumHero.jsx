@@ -70,9 +70,16 @@ function MomentumHero({notes, selectedDay, onSelectDay}) {
 	const [streakDays, setStreakDays] = useState([])
 	const [showStreakInfo, setShowStreakInfo] = useState(false)
 	const ringRef = useRef(null)
-	// Captured once via useState's lazy initializer (the sanctioned place for
-	// an impure Date.now() read) rather than called inline during render.
-	const [now] = useState(() => Date.now())
+	// The clock lives in state (an impure Date.now() can't be read during
+	// render) and ticks every minute: frozen at mount, a tab left open past
+	// midnight never rolled its 7-day window forward. (Notes created after the
+	// last tick have createdAt > now; the age clamp below counts them as
+	// "today" rather than dropping them.)
+	const [now, setNow] = useState(() => Date.now())
+	useEffect(() => {
+		const id = setInterval(() => setNow(Date.now()), 60 * 1000)
+		return () => clearInterval(id)
+	}, [])
 
 	// "Daily activity" card's own view switcher — independent of the
 	// headline/stat-line above, which always talks about the trailing week
@@ -183,9 +190,11 @@ function MomentumHero({notes, selectedDay, onSelectDay}) {
 
 		for (const n of notes) {
 			const age = now - new Date(n.createdAt).getTime()
-			if (age >= 0 && age < 7 * DAY) {
+			// A negative age (server clock slightly ahead of this device's)
+			// still means "just now", not "not this week".
+			if (age < 7 * DAY) {
 				weekCount++
-				const dayIndex = 6 - Math.floor(age / DAY)
+				const dayIndex = 6 - Math.floor(Math.max(0, age) / DAY)
 				buckets[Math.max(0, Math.min(6, dayIndex))]++
 			}
 		}
@@ -218,7 +227,7 @@ function MomentumHero({notes, selectedDay, onSelectDay}) {
 				</h1>
 				<p className="text-[14.5px] text-ink/60 leading-[1.55] max-w-[48ch]">
 					{notesThisWeek} note{notesThisWeek === 1 ? '' : 's'} written this week{pinnedCount > 0 ? `, ${pinnedCount} pinned` : ''}
-					{dueCount === null ? '.' : allCaughtUp ? " — and today's review deck is fully cleared." : ` — and ${dueCount} flashcard${dueCount === 1 ? '' : 's'} waiting for review.`}
+					{dueCount === null ? '.' : allCaughtUp ? " — and no flashcards are due today." : ` — and ${dueCount} flashcard${dueCount === 1 ? '' : 's'} waiting for review.`}
 				</p>
 				<div className="rounded-[12px] border border-ink/10 bg-ink/4 p-3 mt-4 max-w-[260px]">
 					<div className="flex items-center justify-between mb-1.5">

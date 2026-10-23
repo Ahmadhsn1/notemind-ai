@@ -52,50 +52,63 @@ function Sidebar({folders, activeFolder, onSelectFolder, tags, activeTag, onSele
 				onClick={onClose}
 			/>
 			<aside
-				className={`w-[240px] shrink-0 h-screen overflow-y-auto py-[22px] px-4 flex flex-col gap-5 bg-ink/3 border-r border-ink/10 fixed top-0 left-0 z-40 shadow-[8px_0_30px_rgba(0,0,0,0.4)] [transition:transform_0.25s_ease] ${isOpen ? 'translate-x-0' : '-translate-x-full'} min-[761px]:sticky min-[761px]:left-auto min-[761px]:z-auto min-[761px]:shadow-none min-[761px]:[transition:none] min-[761px]:translate-x-0`}
+				className={`w-[240px] shrink-0 h-screen py-[22px] px-4 flex flex-col gap-5 bg-ink/3 max-[760px]:bg-[linear-gradient(160deg,var(--color-panel-a),var(--color-panel-b))] max-[760px]:backdrop-blur-xl border-r border-ink/10 fixed top-0 left-0 z-40 [transition:transform_0.25s_ease,box-shadow_0.25s_ease] ${isOpen ? 'translate-x-0 shadow-[8px_0_30px_rgba(0,0,0,0.4)]' : '-translate-x-full shadow-none'} min-[761px]:sticky min-[761px]:left-auto min-[761px]:z-auto min-[761px]:shadow-none min-[761px]:[transition:none] min-[761px]:translate-x-0`}
 			>
+				{/* Three zones: primary actions stay fixed on top, folders/tags scroll in the
+				    middle, and Library + links + the account row stay pinned at the bottom,
+				    so nothing important is ever hidden behind a scroll on a short screen. */}
+				<div className="shrink-0 flex flex-col gap-2.5">
 				<div className="px-1.5">
 					<Logo />
 				</div>
 
-				<button onClick={newNote} className="btn-primary p-[11px] text-[13.5px]">+ New note</button>
+				<button onClick={newNote} className="btn-primary p-[10px] text-[13.5px]">+ New note</button>
 
 				<button
 					onClick={askAI}
-					className="bg-ink/8 border border-accent/30 text-accent rounded-[10px] font-semibold cursor-pointer transition-[opacity,transform] duration-200 hover:opacity-90 hover:-translate-y-px active:scale-[0.98] p-[11px] text-[13.5px] flex items-center justify-center gap-1.5"
+					className="bg-ink/8 border border-accent/30 text-accent rounded-[10px] font-semibold cursor-pointer transition-[opacity,transform] duration-200 hover:opacity-90 hover:-translate-y-px active:scale-[0.98] p-[9px] text-[13px] flex items-center justify-center gap-1.5"
 				>
 					<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.8 5.6L19 9.4l-5.2 1.9L12 17l-1.8-5.7L5 9.4l5.2-1.8L12 2Z" /></svg>
 					Ask Momo
 				</button>
 
+				<div className="grid grid-cols-2 gap-2">
 				<Link
 					to="/graph"
+					title="Graph view"
+					aria-label="Graph view"
 					onClick={onClose}
-					className="bg-ink/6 border border-ink/12 text-ink/70 rounded-[10px] font-semibold cursor-pointer transition-[opacity,transform] duration-200 hover:opacity-90 hover:text-ink hover:-translate-y-px active:scale-[0.98] p-[11px] text-[13.5px] flex items-center justify-center gap-1.5"
+					className="bg-ink/6 border border-ink/12 text-ink/70 rounded-[10px] font-semibold cursor-pointer transition-[opacity,transform] duration-200 hover:opacity-90 hover:text-ink hover:-translate-y-px active:scale-[0.98] p-[9px] text-[12.5px] whitespace-nowrap flex items-center justify-center gap-1.5"
 				>
 					<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="6" cy="6" r="2.5" /><circle cx="18" cy="8" r="2.5" /><circle cx="9" cy="18" r="2.5" /><path d="M8 7.5l7.5-.5M7.5 8l1 8" /></svg>
-					Graph view
+					Graph
 				</Link>
 
 				<button
 					onClick={openFlashcards}
-					className="bg-ink/6 border border-ink/12 text-ink/70 rounded-[10px] font-semibold cursor-pointer transition-[opacity,transform] duration-200 hover:opacity-90 hover:text-ink hover:-translate-y-px active:scale-[0.98] p-[11px] text-[13.5px] flex items-center justify-center gap-1.5"
+					className="bg-ink/6 border border-ink/12 text-ink/70 rounded-[10px] font-semibold cursor-pointer transition-[opacity,transform] duration-200 hover:opacity-90 hover:text-ink hover:-translate-y-px active:scale-[0.98] p-[9px] text-[12.5px] whitespace-nowrap flex items-center justify-center gap-1.5"
 				>
 					<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="14" height="10" rx="2" /><path d="M8 20h9" /><path d="M13 15v5" /></svg>
 					Flashcards
 				</button>
+				</div>
 
 				{isAdmin && (
 					<Link
 						to="/admin"
 						onClick={onClose}
-						className="bg-ink/6 border border-ink/12 text-ink/70 rounded-[10px] font-semibold cursor-pointer transition-[opacity,transform] duration-200 hover:opacity-90 hover:text-ink hover:-translate-y-px active:scale-[0.98] p-[11px] text-[13.5px] flex items-center justify-center gap-1.5"
+						className="bg-ink/6 border border-ink/12 text-ink/70 rounded-[10px] font-semibold cursor-pointer transition-[opacity,transform] duration-200 hover:opacity-90 hover:text-ink hover:-translate-y-px active:scale-[0.98] p-[9px] text-[13px] flex items-center justify-center gap-1.5"
 					>
 						<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2 3 6v6c0 5 3.8 8.5 9 10 5.2-1.5 9-5 9-10V6l-9-4Z" /></svg>
 						Admin
 					</Link>
 				)}
 
+				</div>
+
+				{/* The bottom fade hints that more (e.g. Tags) sits below the fold; it only
+				    ever covers empty space when everything already fits. */}
+				<div className="flex-1 min-h-0 overflow-y-auto overscroll-contain flex flex-col gap-4 pb-3 [mask-image:linear-gradient(to_bottom,#000_calc(100%-16px),transparent)] [-webkit-mask-image:linear-gradient(to_bottom,#000_calc(100%-16px),transparent)]">
 				<div>
 					<div className="text-[10.5px] font-bold uppercase tracking-[0.07em] text-ink/40 px-2.5 mb-1">Folders</div>
 					<div className="flex flex-col gap-0.5">
@@ -105,7 +118,7 @@ function Sidebar({folders, activeFolder, onSelectFolder, tags, activeTag, onSele
 								<div
 									key={f.name}
 									onClick={() => selectFolder(f.name)}
-									className={`flex items-center gap-2.5 py-[9px] px-2.5 rounded-[10px] cursor-pointer border text-[13.5px] transition-colors duration-150 ${active ? 'bg-accent/14 border-accent/45 text-ink' : 'border-transparent text-ink/62 hover:bg-ink/6 hover:text-ink'}`}
+									className={`flex items-center gap-2.5 py-[7px] px-2.5 rounded-[10px] cursor-pointer border text-[13.5px] transition-colors duration-150 ${active ? 'bg-accent/14 border-accent/45 text-ink' : 'border-transparent text-ink/62 hover:bg-ink/6 hover:text-ink'}`}
 								>
 									<span
 										className="w-2 h-2 rounded-full shrink-0"
@@ -122,27 +135,32 @@ function Sidebar({folders, activeFolder, onSelectFolder, tags, activeTag, onSele
 				{tags.length > 0 && (
 					<div>
 						<div className="text-[10.5px] font-bold uppercase tracking-[0.07em] text-ink/40 px-2.5 mb-1">Tags</div>
-						{/* Capped and scrollable, unlike Folders above — a folder count
-						    stays small in practice, but AI auto-tagging can produce far
-						    more tags than fit without pushing Library out of view. */}
-						<div className="flex flex-col gap-0.5 max-h-[168px] overflow-y-auto">
+						{/* Chips, not rows: AI auto-tagging can produce far more tags than a
+						    list could show without pushing everything else out of view. */}
+						<div className="flex flex-wrap gap-1.5 px-1">
 							{tags.map((t) => {
 								const active = t.name === activeTag
 								return (
-									<div
+									<button
+										type="button"
 										key={t.name}
 										onClick={() => selectTag(t.name)}
-										className={`flex items-center gap-2.5 py-[9px] px-2.5 rounded-[10px] cursor-pointer border text-[13.5px] transition-colors duration-150 ${active ? 'bg-accent/14 border-accent/45 text-ink' : 'border-transparent text-ink/62 hover:bg-ink/6 hover:text-ink'}`}
+										aria-pressed={active}
+										title={`#${t.name}`}
+										className={`inline-flex max-w-full items-center gap-1.5 py-1 px-2.5 rounded-full border text-[12px] cursor-pointer transition-colors duration-150 ${active ? 'bg-accent/14 border-accent/45 text-ink' : 'bg-transparent border-ink/12 text-ink/60 hover:bg-ink/6 hover:text-ink'}`}
 									>
-										<span className="flex-1 truncate">#{t.name}</span>
-										<span className={`text-[11px] font-semibold py-px px-[7px] rounded-full ${active ? 'text-accent bg-accent/16' : 'text-ink/42 bg-ink/6'}`}>{t.count}</span>
-									</div>
+										<span className="truncate">#{t.name}</span>
+										<span className={`text-[10.5px] font-semibold ${active ? 'text-accent' : 'text-ink/40'}`}>{t.count}</span>
+									</button>
 								)
 							})}
 						</div>
 					</div>
 				)}
 
+				</div>
+
+				<div className="shrink-0 flex flex-col gap-3">
 				<div className="flex flex-col gap-0.5">
 					<div className="text-[10.5px] font-bold uppercase tracking-[0.07em] text-ink/40 px-2.5 mb-1">Library</div>
 					{[
@@ -154,7 +172,7 @@ function Sidebar({folders, activeFolder, onSelectFolder, tags, activeTag, onSele
 							<div
 								key={key}
 								onClick={() => selectView(key)}
-								className={`flex items-center gap-2.5 py-[9px] px-2.5 rounded-[10px] cursor-pointer border text-[13.5px] transition-colors duration-150 ${active ? 'bg-accent/14 border-accent/45 text-ink' : 'border-transparent text-ink/62 hover:bg-ink/6 hover:text-ink'}`}
+								className={`flex items-center gap-2.5 py-[7px] px-2.5 rounded-[10px] cursor-pointer border text-[13.5px] transition-colors duration-150 ${active ? 'bg-accent/14 border-accent/45 text-ink' : 'border-transparent text-ink/62 hover:bg-ink/6 hover:text-ink'}`}
 							>
 								<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">{icon}</svg>
 								<span className="flex-1">{label}</span>
@@ -162,12 +180,11 @@ function Sidebar({folders, activeFolder, onSelectFolder, tags, activeTag, onSele
 						)
 					})}
 				</div>
-
-				<div className="mt-auto flex items-center gap-1">
+				<div className="flex items-center gap-1">
 					<Link
 						to="/features"
 						onClick={onClose}
-						className="flex-1 flex items-center gap-2 py-2 px-2.5 rounded-[10px] text-[12.5px] font-medium text-ink/45 no-underline cursor-pointer transition-colors duration-150 hover:bg-ink/6 hover:text-ink/75"
+						className="flex-1 min-w-0 flex items-center justify-center gap-1.5 py-2 px-2 rounded-[10px] text-[12px] font-medium whitespace-nowrap text-ink/45 no-underline cursor-pointer transition-colors duration-150 hover:bg-ink/6 hover:text-ink/75"
 					>
 						<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></svg>
 						Features
@@ -175,7 +192,7 @@ function Sidebar({folders, activeFolder, onSelectFolder, tags, activeTag, onSele
 					<Link
 						to="/whats-new"
 						onClick={onClose}
-						className="flex-1 flex items-center gap-2 py-2 px-2.5 rounded-[10px] text-[12.5px] font-medium text-ink/45 no-underline cursor-pointer transition-colors duration-150 hover:bg-ink/6 hover:text-ink/75"
+						className="flex-1 min-w-0 flex items-center justify-center gap-1.5 py-2 px-2 rounded-[10px] text-[12px] font-medium whitespace-nowrap text-ink/45 no-underline cursor-pointer transition-colors duration-150 hover:bg-ink/6 hover:text-ink/75"
 					>
 						<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" className="shrink-0"><path d="M12 2l1.8 5.6L19 9.4l-5.2 1.9L12 17l-1.8-5.7L5 9.4l5.2-1.8L12 2Z" /></svg>
 						What's new
@@ -196,6 +213,7 @@ function Sidebar({folders, activeFolder, onSelectFolder, tags, activeTag, onSele
 						aria-label="Log out"
 						className="w-[30px] h-[30px] p-0 shrink-0 rounded-[8px] bg-transparent border-none text-ink/42 text-sm font-semibold cursor-pointer transition-[opacity,transform] duration-200 hover:bg-danger/18 hover:text-danger-light hover:opacity-100 active:scale-[0.98]"
 					>⏻</button>
+				</div>
 				</div>
 			</aside>
 		</>

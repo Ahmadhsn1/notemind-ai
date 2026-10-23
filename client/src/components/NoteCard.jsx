@@ -65,7 +65,9 @@ function NoteCard({note, view, onDelete, onEdit, onSummarize, onView, onTogglePi
 					)}
 				</div>
 
-				<div className="flex gap-1 shrink-0 opacity-100 transition-opacity duration-150 min-[761px]:opacity-0 min-[761px]:group-hover:opacity-100">
+				{/* Desktop: the actions overlay the card's top-right on hover/focus instead of
+				    reserving ~150px beside the title while invisible, so titles use the full width. */}
+				<div className="flex gap-1 shrink-0 opacity-100 transition-opacity duration-150 min-[761px]:absolute min-[761px]:top-2.5 min-[761px]:right-2.5 min-[761px]:z-[1] min-[761px]:p-[3px] min-[761px]:rounded-[10px] min-[761px]:bg-ink-deep/85 min-[761px]:backdrop-blur-sm min-[761px]:opacity-0 min-[761px]:group-hover:opacity-100 min-[761px]:focus-within:opacity-100">
 					{view === 'trash' ? (
 						<>
 							<button className={`${iconBtnBase} hover:bg-accent/22 hover:text-accent`} onClick={stop(onRestore)} aria-label="Restore" title="Restore">

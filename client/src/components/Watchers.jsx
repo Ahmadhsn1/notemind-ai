@@ -30,7 +30,7 @@ function useEyes(mode, mousePos, ref) {
       const angle = Math.atan2(dy, dx);
       // Normalized 0..1 (full deflection at ~160px away); <Eyes> scales it to
       // each eye's own size so small eyes never push the pupil past the rim.
-      const dist = Math.min(1, Math.hypot(dx, dy) / 160);
+      const dist = Math.min(1, Math.hypot(dx, dy) / 110);
       next = {
         pupil: { x: Math.cos(angle) * dist, y: Math.sin(angle) * dist },
         tilt: Math.max(-6, Math.min(6, dx / 60)),
@@ -96,9 +96,10 @@ function Eye({ w, h, blinking, offset }) {
 function Eyes({ pupil, blinking, shy, size }) {
   const w = size * 0.42;
   const h = size * 0.54;
-  // Eyes drift toward whatever the character is looking at; kept tiny so the
-  // face stays composed instead of wandering.
-  const reach = size * 0.1;
+  // Eyes drift toward whatever the character is looking at. Without a white
+  // sclera to move a pupil within, the drift has to be large enough to read
+  // as a direction at a glance.
+  const reach = size * 0.22;
   const offset = { x: pupil.x * reach, y: pupil.y * reach };
   const blushW = size * 0.6;
   return (
@@ -152,8 +153,19 @@ function Mouth({ mode, size }) {
 }
 
 function Face({ mode, pupil, blinking, size }) {
+  // The whole face also leans a little toward the gaze (like a head turn).
+  const lean = size * 0.1;
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        width: '100%',
+        transform: `translate(${pupil.x * lean}px, ${pupil.y * lean}px)`,
+        transition: 'transform 0.2s ease-out',
+      }}
+    >
       <Eyes pupil={pupil} blinking={blinking} shy={mode === 'shy'} size={size} />
       <Mouth mode={mode} size={size} />
     </div>

@@ -1,44 +1,52 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 
-function useEyes(mode, mousePos, ref) {
+// Where a character looks is derived from a *target point* in viewport
+// coordinates (`aim`), never from a hardcoded direction — so it's right on
+// every layout: on desktop the form is to the right of the characters, on a
+// phone it's stacked below them, on a tablet it can be either.
+//   aim  — the point to look at (null = rest straight ahead)
+//   away — look the opposite way (shy: avert the eyes from the form)
+// The origin is the character's *face*, not its body: a pencil is 200px tall
+// with its eyes near the top, so measuring from the body's center made it
+// look downward even when the target was level with its eyes.
+function useEyes(mode, aim, away, faceRef) {
   const [eyeState, setEyeState] = useState({ pupil: { x: 0, y: 0 }, tilt: 0 });
 
-  // useLayoutEffect (not useEffect): this reads the character's committed
-  // DOM position via `ref`, which React only allows outside of render. Running
-  // it before paint (instead of after, like useEffect) avoids a one-frame-stale
-  // pupil position flashing on every mouse move.
+  // useLayoutEffect (not useEffect): this reads the committed DOM position via
+  // `faceRef`, which React only allows outside of render. Running before
+  // paint avoids a one-frame-stale pupil position on every update.
   useLayoutEffect(() => {
-    if (!ref.current) return;
+    if (!faceRef.current) return;
 
     let next;
-    if (mode === 'lookAtForm') {
-      next = { pupil: { x: 1, y: 0.25 }, tilt: 5 };
-    } else if (mode === 'shy') {
-      next = { pupil: { x: -1, y: -0.5 }, tilt: -9 };
-    } else if (mode === 'remind' || mode === 'glance') {
+    if (mode === 'remind') {
+      // Glancing up at the speech bubble.
       next = { pupil: { x: 0, y: -0.75 }, tilt: 0 };
-    } else if (!mousePos) {
-      // No real pointer yet (e.g. touch device before the first tap) — rest
-      // the eyes straight ahead instead of aiming at a stale (0,0) origin.
+    } else if (!aim) {
       next = { pupil: { x: 0, y: 0 }, tilt: 0 };
     } else {
-      const rect = ref.current.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
-      const dx = mousePos.x - cx;
-      const dy = mousePos.y - cy;
+      const rect = faceRef.current.getBoundingClientRect();
+      let dx = aim.x - (rect.left + rect.width / 2);
+      let dy = aim.y - (rect.top + rect.height / 2);
+      if (away) {
+        dx = -dx;
+        dy = -dy;
+      }
       const angle = Math.atan2(dy, dx);
-      // Normalized 0..1 (full deflection at ~160px away); <Eyes> scales it to
-      // each eye's own size so small eyes never push the pupil past the rim.
-      const dist = Math.min(1, Math.hypot(dx, dy) / 110);
+      // Normalized 0..1 (full deflection ~110px away); <Eyes> scales it to the
+      // character's own size. Averting the eyes should read clearly, so it
+      // never settles below 0.8 deflection.
+      const raw = Math.min(1, Math.hypot(dx, dy) / 110);
+      const dist = away ? Math.max(0.8, raw) : raw;
       next = {
         pupil: { x: Math.cos(angle) * dist, y: Math.sin(angle) * dist },
-        tilt: Math.max(-6, Math.min(6, dx / 60)),
+        // Lean toward what it's watching, or away from it when shy.
+        tilt: Math.max(-9, Math.min(9, away ? dx / 40 : dx / 60)),
       };
     }
 
     setEyeState(next);
-  }, [mousePos, mode, ref]);
+  }, [aim, away, mode, faceRef]);
 
   return eyeState;
 }
@@ -152,11 +160,12 @@ function Mouth({ mode, size }) {
   );
 }
 
-function Face({ mode, pupil, blinking, size }) {
+function Face({ mode, pupil, blinking, size, faceRef }) {
   // The whole face also leans a little toward the gaze (like a head turn).
   const lean = size * 0.1;
   return (
     <div
+      ref={faceRef}
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -184,9 +193,10 @@ function getCharClasses(mode, bounceKey) {
 // (Bookmark's ribbon notch), where a box-shadow would just draw a rectangle.
 const CHAR_SHADOW = 'drop-shadow-[0_10px_22px_rgba(0,0,0,0.35)]';
 
-function Pencil({ mode, mousePos, bounceKey }) {
+function Pencil({ mode, aim, away, bounceKey }) {
   const ref = useRef(null);
-  const { pupil, tilt } = useEyes(mode, mousePos, ref);
+  const faceRef = useRef(null);
+  const { pupil, tilt } = useEyes(mode, aim, away, faceRef);
   const blinking = useBlink(400);
   return (
     <div
@@ -215,7 +225,7 @@ function Pencil({ mode, mousePos, bounceKey }) {
         className="w-9 h-[142px] relative overflow-hidden"
         style={{ background: 'linear-gradient(90deg, #e8a82e 0%, #ffd45c 40%, #ffe48a 60%, #e8a82e 100%)' }}
       >
-        <div className="absolute top-[18px] left-0 right-0"><Face mode={mode} pupil={pupil} blinking={blinking} size={16} /></div>
+        <div className="absolute top-[18px] left-0 right-0"><Face mode={mode} pupil={pupil} blinking={blinking} faceRef={faceRef} size={16} /></div>
       </div>
       {/* wood tip + graphite point */}
       <div className="relative">
@@ -232,9 +242,10 @@ function Pencil({ mode, mousePos, bounceKey }) {
   );
 }
 
-function Notebook({ mode, mousePos, bounceKey }) {
+function Notebook({ mode, aim, away, bounceKey }) {
   const ref = useRef(null);
-  const { pupil, tilt } = useEyes(mode, mousePos, ref);
+  const faceRef = useRef(null);
+  const { pupil, tilt } = useEyes(mode, aim, away, faceRef);
   const blinking = useBlink(1200);
   return (
     <div
@@ -260,16 +271,17 @@ function Notebook({ mode, mousePos, bounceKey }) {
           />
         ))}
       </div>
-      <div className="absolute top-6 left-9 right-2.5"><Face mode={mode} pupil={pupil} blinking={blinking} size={21} /></div>
+      <div className="absolute top-6 left-9 right-2.5"><Face mode={mode} pupil={pupil} blinking={blinking} faceRef={faceRef} size={21} /></div>
       <div className="absolute h-[3px] rounded-[2px] bg-white/30 bottom-9 left-10 right-6" />
       <div className="absolute h-[3px] rounded-[2px] bg-white/30 bottom-6 left-10 right-4" />
     </div>
   );
 }
 
-function Bookmark({ mode, mousePos, bounceKey }) {
+function Bookmark({ mode, aim, away, bounceKey }) {
   const ref = useRef(null);
-  const { pupil, tilt } = useEyes(mode, mousePos, ref);
+  const faceRef = useRef(null);
+  const { pupil, tilt } = useEyes(mode, aim, away, faceRef);
   const blinking = useBlink(2100);
   return (
     <div
@@ -287,15 +299,16 @@ function Bookmark({ mode, mousePos, bounceKey }) {
       >
         <div className="absolute inset-y-0 left-1/2 w-px bg-black/10" />
         <div className="absolute top-3.5 left-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full" style={{ boxShadow: 'inset 0 0 0 3px rgba(255,255,255,0.6)' }} />
-        <div className="absolute top-11 left-0 right-0"><Face mode={mode} pupil={pupil} blinking={blinking} size={18} /></div>
+        <div className="absolute top-11 left-0 right-0"><Face mode={mode} pupil={pupil} blinking={blinking} faceRef={faceRef} size={18} /></div>
       </div>
     </div>
   );
 }
 
-function Folder({ mode, mousePos, bounceKey }) {
+function Folder({ mode, aim, away, bounceKey }) {
   const ref = useRef(null);
-  const { pupil, tilt } = useEyes(mode, mousePos, ref);
+  const faceRef = useRef(null);
+  const { pupil, tilt } = useEyes(mode, aim, away, faceRef);
   const blinking = useBlink(1700);
   return (
     <div
@@ -315,16 +328,18 @@ function Folder({ mode, mousePos, bounceKey }) {
         style={{ background: 'linear-gradient(155deg, color-mix(in srgb, var(--color-accent) 40%, white) 0%, color-mix(in srgb, var(--color-accent) 70%, white) 55%, color-mix(in srgb, var(--color-accent) 55%, black) 100%)' }}
       >
         <div className="absolute top-0 inset-x-0 h-px bg-white/25" />
-        <div className="absolute top-[22px] left-0 right-0"><Face mode={mode} pupil={pupil} blinking={blinking} size={21} /></div>
+        <div className="absolute top-[22px] left-0 right-0"><Face mode={mode} pupil={pupil} blinking={blinking} faceRef={faceRef} size={21} /></div>
         <div className="absolute -bottom-6 -right-6 w-20 h-20 rounded-full bg-black/10 blur-md" />
       </div>
     </div>
   );
 }
 
-function Watchers({ mode, bounceKey }) {
-  const [mousePos, setMousePos] = useState(null);
+function Watchers({ mode, bounceKey, gazeRef }) {
+  const [pointer, setPointer] = useState(null);
+  const [gaze, setGaze] = useState(null);
 
+  // Pointer tracking (mouse + touch).
   useEffect(() => {
     // Pointer events can fire several times per frame, and every update
     // re-renders all four characters (each reads layout). Coalesce to at
@@ -336,7 +351,7 @@ function Watchers({ mode, bounceKey }) {
       if (frame) return;
       frame = requestAnimationFrame(() => {
         frame = 0;
-        setMousePos(latest);
+        setPointer(latest);
       });
     };
     const handleMove = (e) => queue(e.clientX, e.clientY);
@@ -345,16 +360,67 @@ function Watchers({ mode, bounceKey }) {
     const handleTouch = (e) => {
       if (e.touches.length > 0) queue(e.touches[0].clientX, e.touches[0].clientY);
     };
+    // Once the cursor leaves the window there's nothing to follow; drop back
+    // to looking at the form instead of staring at the last edge it touched.
+    const handleLeave = () => {
+      cancelAnimationFrame(frame);
+      frame = 0;
+      setPointer(null);
+    };
     window.addEventListener('mousemove', handleMove);
     window.addEventListener('touchstart', handleTouch, { passive: true });
     window.addEventListener('touchmove', handleTouch, { passive: true });
+    document.documentElement.addEventListener('mouseleave', handleLeave);
     return () => {
       window.removeEventListener('mousemove', handleMove);
       window.removeEventListener('touchstart', handleTouch);
       window.removeEventListener('touchmove', handleTouch);
+      document.documentElement.removeEventListener('mouseleave', handleLeave);
       cancelAnimationFrame(frame);
     };
   }, []);
+
+  // The form-side gaze target: the focused field if there is one, otherwise
+  // the form itself. Measured from the real layout, then re-measured whenever
+  // that layout can change (focus moves, resize/rotation, on-screen keyboard,
+  // scroll) — so it's correct on a laptop, a phone and a tablet alike.
+  useEffect(() => {
+    const container = gazeRef?.current;
+    if (!container) return;
+    let frame = 0;
+    const measure = () => {
+      frame = 0;
+      const active = document.activeElement;
+      const el = active && active !== document.body && container.contains(active) ? active : container;
+      const r = el.getBoundingClientRect();
+      // Wide fields: aim at where the text/caret is (the left part), not the
+      // far-away geometric center.
+      setGaze({ x: r.left + Math.min(r.width / 2, 120), y: r.top + r.height / 2 });
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(measure);
+    };
+    measure();
+    window.addEventListener('resize', schedule);
+    window.addEventListener('scroll', schedule, { passive: true, capture: true });
+    document.addEventListener('focusin', schedule);
+    document.addEventListener('focusout', schedule);
+    window.visualViewport?.addEventListener('resize', schedule);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('resize', schedule);
+      window.removeEventListener('scroll', schedule, { capture: true });
+      document.removeEventListener('focusin', schedule);
+      document.removeEventListener('focusout', schedule);
+      window.visualViewport?.removeEventListener('resize', schedule);
+    };
+  }, [gazeRef, mode]);
+
+  // Idle: follow the pointer, or look at the form until there is one (a phone
+  // has no hover cursor). Engaged with the form (typing, glancing at a
+  // revealed password, shy): look at it — or, when shy, away from it.
+  const aim = mode === 'watch' ? (pointer ?? gaze) : (gaze ?? pointer);
+  const away = mode === 'shy';
 
   return (
     <div aria-hidden="true" data-watchers className="animate-char-rise shrink-0 flex items-end gap-[10px] relative scale-75 min-[500px]:scale-90 min-[800px]:scale-100 ml-0 min-[1100px]:ml-[-40px]">
@@ -365,10 +431,10 @@ function Watchers({ mode, bounceKey }) {
       )}
       {/* soft ground shadow that breathes in sync with the characters' float */}
       <div className="absolute -bottom-3 inset-x-3 h-3 rounded-[50%] bg-black/30 blur-md animate-shadow-pulse" />
-      <Pencil mode={mode} mousePos={mousePos} bounceKey={bounceKey} />
-      <Notebook mode={mode} mousePos={mousePos} bounceKey={bounceKey} />
-      <Bookmark mode={mode} mousePos={mousePos} bounceKey={bounceKey} />
-      <Folder mode={mode} mousePos={mousePos} bounceKey={bounceKey} />
+      <Pencil mode={mode} aim={aim} away={away} bounceKey={bounceKey} />
+      <Notebook mode={mode} aim={aim} away={away} bounceKey={bounceKey} />
+      <Bookmark mode={mode} aim={aim} away={away} bounceKey={bounceKey} />
+      <Folder mode={mode} aim={aim} away={away} bounceKey={bounceKey} />
     </div>
   );
 }
